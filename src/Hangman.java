@@ -11,51 +11,53 @@ import javax.swing.JTextField;
 import java.io.FileNotFoundException;
 
 public class Hangman {
-	public static void main(String[] args) throws FileNotFoundException {
-	        
-		Scanner input = new Scanner(System.in); 
-		
-		String words[] = {"Abdul", "Usman", "Hello", "World", "blue", "green", "red"};
+	
+	//Get the word to guess from an array
+	public static String getWord() {
+		String words[] = {"abdul", "usman", "hello", "world", "blue", "green", "red"};
 		String word;
+		int randomNumber = 0;
+		
 		Random generator = new Random();
-		
-		int wrongGuesses =0;
-		int randomNumber = generator.nextInt(words.length);
-		
+		randomNumber = generator.nextInt(words.length);
 		word = words[randomNumber];
-		//System.out.println(word);
-		System.out.println(word);
 		
-		List<Character> playerGuesses = new ArrayList<Character>();		
-		wordState(word, playerGuesses);
-		
-		while(true) {
-			hangedMan(wrongGuesses);
-			
-			if (wrongGuesses >= 6) {
-				System.out.println("You have lost");
-				break;
-			}
-			
-			if (!playerGuess(input, word, playerGuesses))
-						wrongGuesses++;
-			
-			if ( wordState(word, playerGuesses) ) {
-				System.out.println("Congratulation you won!!");
-				break;
-			}
-			
-			
-			/*System.out.println("Would you like to guess the word? ");
-			if(input.nextLine().equals((word))) {
-				break;
-			}
-			else 
-				System.out.println("Wrong word, please try again.");*/
-		}		
+		return word;
 	}
 
-	private static void hangedMan(int wrongGuesses) {
+	//checks if the word contains the user guessed value
+	static boolean playerGuess(String guess, String word, List<Character> playerGuesses) {
+		boolean correct = false;
+		
+		playerGuesses.add(guess.charAt(0));
+		correct = word.contains(guess);
+		
+		return correct;
+	}
+
+	//Check if the word characters have been guessed
+	static boolean wordState(String word, List<Character> playerGuesses) {
+		int correctGuesses = 0;
+		
+		//Go through each character and compare it to the actual word. If correct character, display it.
+		for (int i=0; i<word.length(); i++) {
+			if(playerGuesses.contains(word.charAt(i))) {
+				System.out.print(word.charAt(i));
+				correctGuesses++; 
+			}
+			else 
+				System.out.print("-");
+		} 
+		System.out.println();
+
+		//double check to make sure the word length matches the length of the guessed word
+		return (word.length() == correctGuesses);
+	}
+		
+	//Print out the hangman figure
+	static int printMan(int wrongGuesses) {
+		int gameOver = 0;
+		
 		System.out.println("==================");
 		System.out.println("         |");
 		
@@ -74,38 +76,109 @@ public class Hangman {
 		if (wrongGuesses >= 5)
 			System.out.print("        / ");
 		
-		if (wrongGuesses >= 6)
+		if (wrongGuesses >= 6) {
 			System.out.println("\\");
-		
+			gameOver = 1;
+		}
 		System.out.println();
+		
+		return gameOver;
 	}
-
-	private static boolean playerGuess(Scanner input, String word, List<Character> playerGuesses) {
-		System.out.println();
-		System.out.print("Please enter a letter: ");
-		String playerCharacterGuess = input.nextLine();
-		System.out.println();
-		playerGuesses.add(playerCharacterGuess.charAt(0));
+	
+	public static boolean guessWord (String guessedWord, String word) {
+		if(guessedWord.equals((word))) {
+			return true;
+		}
 		
-		return word.contains(playerCharacterGuess);
-		
-		//wordState(word, playerGuesses);
+		return false;
 	}
-
-	private static boolean wordState(String word, List<Character> playerGuesses) {
-		int correctGuesses = 0;
+	
+	//Main function
+	public static void main(String[] args) throws FileNotFoundException {
+		List<Character> playerGuesses = new ArrayList<Character>();	
+		Scanner input = new Scanner(System.in); 
+		String word;
+		String userInput;
+		String guessedWord;
+		int wrongGuesses =0;
+		int winner = 0;
+		int gameOver = 0;
+		boolean playerGuess;
 		
-		for (int i=0; i<word.length(); i++) {
-			if(playerGuesses.contains(word.charAt(i))) {
-				System.out.print(word.charAt(i));
-				correctGuesses++;
+		word = getWord();
+		//System.out.println(word);
+		System.out.println("Hangman\n");
+		System.out.println("Welcome!");
+		
+		while(true) {
+			System.out.println();
+			gameOver = printMan(wrongGuesses);
+			
+			//The user lost
+			if (gameOver == 1) {
+				System.out.println("You have lost");
+				break;
 			}
-			else 
-				System.out.print("-");
-		} 
-		System.out.println();
-		return (word.length() == correctGuesses);
+			
+			//If the user guessed all the correct characters
+			if (wordState(word, playerGuesses) ) {
+				System.out.println("Congratulation you won!!");
+				break;
+			}
+			
+			System.out.print("\nPlease enter a letter: ");
+			String playerCharacterGuess = input.nextLine();
+			System.out.println();			
+			
+			playerGuess = playerGuess(playerCharacterGuess, word, playerGuesses);
+			
+			//If player guessed wrong, increment the counter
+			if (!playerGuess)
+				wrongGuesses++;
+			
+			gameOver = printMan(wrongGuesses);
+			wordState(word, playerGuesses);
+			
+			System.out.print("\nWould you like to guess the word? ");
+			userInput = input.nextLine();
+			
+			//Make sure the user enters yes or no while checking if the word was correct
+			while (true) {
+				if (userInput.equals("yes") || userInput.equals("Yes")) {
+					System.out.print("\nGuess the word: ");
+					guessedWord = input.nextLine();
+					if(guessWord(guessedWord, word) == true) {
+						System.out.println("Congrats you won!");
+						winner = 1;
+						break;
+					}
+					
+					//Wrong guess
+					else {
+						System.out.println("Wrong Guess! Please try again!");
+						break;
+					}
+				
+				//Break out of the loop if user enters no	
+				}
+				else if (userInput.equals("no") || userInput.equals("No")) {
+					break;
+				}
+				//Error check to check whether the user entered yes or no
+				else {
+					System.out.print("Please enter only yes or no: ");
+					userInput = input.nextLine();
+					System.out.println();
+				}
+			}
+			
+			//If the user won, exit the game
+			if (winner == 1)
+				System.exit(0);
+			
+		}	
+		//close input scanner
+		input.close();
 	}
-
 }
  
